@@ -82,10 +82,6 @@ XXX/
     ├── buildtools/ ------------ # 编译工具
     │   └── gcc7.3/ ------------ # 建议版本：v7.3
     │       ├── gcc/
-    │       ├── gmp/
-    │       ├── isl/
-    │       ├── mpc/
-    │       └── mpfr/
     ├── secure/ ---------------- # 建议版本：v3.0.9
     │   ├── include/
     │   └── lib/
@@ -95,14 +91,17 @@ XXX/
     ├── cjson/ ----------------- # 建议版本：v1.7.17
     │   ├── include/
     │   └── lib/
-    └── gtest/ ----------------- # 建议版本：v1.10.0
+    ├── gtest/ ----------------- # 建议版本：v1.10.0
+    │   ├── include/
+    │   └── lib/
+    └── mockcpp/ --------------- # 建议版本：master
         ├── include/
         └── lib/
 ```
 
 #### 1.1 配置依赖库
 
-请按照上述指定版本下载并编译各依赖库，以避免版本不一致引发的兼容性问题。
+强烈建议按照上述指定版本下载并编译各依赖库，以避免版本不一致引发的兼容性问题！
 
 ##### secure
 **下载地址**：https://gitcode.com/opengauss/openGauss-third_party/tree/master/platform/Huawei_Secure_C
@@ -117,19 +116,32 @@ XXX/
 **编译命令**：`make -j$(nproc) && make install PREFIX=xxx/output`
 
 ##### gtest
-**下载地址**：https://github.com/google/googletest/releases
+**下载地址**：https://github.com/google/googletest/releases（建议 v1.10.0）
 **编译命令**：
 ```
-mkdir output && cd output
-cmake \
--DCMAKE_INSTALL_PREFIX=xxx/output \
--DCMAKE_BUILD_TYPE=Debug \
--DBUILD_SHARED_LIBS=OFF \
--DCMAKE_CXX_COMPILER=g++ \
--DCMAKE_C_COMPILER=gcc \
-..
+mkdir build && cd build
+cmake -DCMAKE_INSTALL_PREFIX=xxx/gtest -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_CXX_FLAGS="-D_GLIBCXX_USE_CXX11_ABI=0" -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc ..
 make -j$(nproc) && make install
 ```
+
+> **注意**：
+> - **x86_64**：必须添加 `-D_GLIBCXX_USE_CXX11_ABI=0`，且使用 `Release` 模式（不要用 Debug，否则库名带 `d` 后缀会导致链接失败）。
+> - **aarch64**：使用 `Debug` 模式（`-DCMAKE_BUILD_TYPE=Debug`），**不要**添加 `-D_GLIBCXX_USE_CXX11_ABI=0`。
+
+##### mockcpp
+**下载地址**：https://github.com/sinojelly/mockcpp
+**编译命令**：
+```
+mkdir build && cd build
+cmake .. -DMOCKCPP_XUNIT=gtest -DMOCKCPP_XUNIT_HOME=xxx/gtest -DCMAKE_INSTALL_PREFIX=xxx/mockcpp -DCMAKE_CXX_FLAGS="-D_GLIBCXX_USE_CXX11_ABI=0"
+make -j$(nproc) && make install
+```
+
+> **注意**：
+> - **x86_64**：需要 `-D_GLIBCXX_USE_CXX11_ABI=0`，与 gtest 保持一致。
+> - **aarch64**：**不要**添加该参数。
+
+> **提示**：上述编译参数可能因操作系统、GCC 版本和 binutils 版本不同而需要调整。如果遇到链接错误，请检查 ABI 是否一致（`nm libgtest.a | grep EqFailure` 中是否含 `cxx11`）。
 
 依赖库编译完成后，请按库名称调整目录结构。例如，`local_libs/secure` 下应包含对应的 `include` 和 `lib` 子目录。
 
@@ -157,9 +169,19 @@ bash build.sh -m release   # 或：debug
 ```bash
 cd dstore
 bash build.sh -m release   # 或：debug
+bash build.sh -m debug -tm ut  # 带单元测试
 ```
 
 编译成功后，`dstore/output/lib/` 路径下应有 `libdstore.so` 与 `libdstore.a` 生成。
+
+#### 2.3 增量编译
+
+首次完整构建后，修改代码只需在 `tmp_build/` 下增量编译，无需每次从头构建：
+
+```bash
+cd dstore/tmp_build
+make -sj$(($(nproc)-2)) install
+```
 
 ---
 
@@ -167,16 +189,7 @@ bash build.sh -m release   # 或：debug
 
 ## 1. 单元测试
 
-### 1.1 编译单元测试
-
-```bash
-cd dstore
-bash build.sh -m debug -tm ut
-```
-
-构建完成后，`tmp_build/bin/` 路径下会生成 `unittest` 可执行文件。
-
-### 1.2 运行测试
+### 1.1 运行测试
 
 所有测试目标均在 `tmp_build/` 目录下执行：
 
@@ -201,7 +214,7 @@ cd ${BUILD_ROOT}/tmp_build
 make run_dstore_buffer_unittest
 ```
 
-### 1.3 使用 AddressSanitizer（ASan）运行
+### 1.2 使用 AddressSanitizer（ASan）运行
 
 ```bash
 make run_dstore_ut_asan

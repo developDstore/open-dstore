@@ -63,3 +63,8 @@ fi
 # PATH
 #-------------------------------------------
 export PATH=$GCCFOLDER/gcc/bin:$PATH
+
+#-------------------------------------------
+# git hooks
+#-------------------------------------------
+git config core.hooksPath .githooks 2>/dev/null
