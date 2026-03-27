@@ -15,3 +15,13 @@
 build_script/dynamic_vfs.conf.init
 build_script/guc.json
 tests/unittest/ut_config/ut_isoland_start.json
+
+# Security: prevent secrets from being committed
+*.key
+*.pem
+*.p12
+*.pfx
+*.keystore
+.env*
+!.env.example
+credentials*
