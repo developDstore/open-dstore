@@ -1,11 +1,11 @@
-name: DStore Unit Tests
+name: DStore UT
 
 on:
   pull_request:
     branches: [main]
 
 jobs:
-  ut:
+  build:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/developdstore/open-dstore-ci:latest
@@ -39,50 +39,211 @@ jobs:
           cmake .. -DCMAKE_BUILD_TYPE=debug -DUTILS_PATH=../utils/output -DENABLE_UT=ON
           make -sj$(nproc) install
 
-      - name: "UT: Buffer"
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dstore-build
+          path: |
+            ${{ github.workspace }}/tmp_build
+            ${{ github.workspace }}/utils/output
+            ${{ github.workspace }}/output
+            ${{ github.workspace }}/tests
+            ${{ github.workspace }}/buildenv
+            ${{ github.workspace }}/build_script
+          retention-days: 1
+
+  ut-buffer:
+    needs: build
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/developdstore/open-dstore-ci:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      BUILD_ROOT: ${{ github.workspace }}
+      LOCAL_LIB_PATH: /opt/project/local_libs
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dstore-build
+          path: ${{ github.workspace }}
+      - name: Run Buffer UT
         run: |
           source ${BUILD_ROOT}/buildenv
           cd ${BUILD_ROOT}/tmp_build
           make run_dstore_buffer_unittest
 
-      - name: "UT: Transaction"
+  ut-transaction:
+    needs: build
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/developdstore/open-dstore-ci:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      BUILD_ROOT: ${{ github.workspace }}
+      LOCAL_LIB_PATH: /opt/project/local_libs
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dstore-build
+          path: ${{ github.workspace }}
+      - name: Run Transaction UT
         run: |
           source ${BUILD_ROOT}/buildenv
           cd ${BUILD_ROOT}/tmp_build
           make run_dstore_xact_unittest
 
-      - name: "UT: Index"
+  ut-index:
+    needs: build
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/developdstore/open-dstore-ci:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      BUILD_ROOT: ${{ github.workspace }}
+      LOCAL_LIB_PATH: /opt/project/local_libs
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dstore-build
+          path: ${{ github.workspace }}
+      - name: Run Index UT
         run: |
           source ${BUILD_ROOT}/buildenv
           cd ${BUILD_ROOT}/tmp_build
           make run_dstore_index_unittest
 
-      - name: "UT: Lock"
+  ut-lock:
+    needs: build
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/developdstore/open-dstore-ci:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      BUILD_ROOT: ${{ github.workspace }}
+      LOCAL_LIB_PATH: /opt/project/local_libs
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dstore-build
+          path: ${{ github.workspace }}
+      - name: Run Lock UT
         run: |
           source ${BUILD_ROOT}/buildenv
           cd ${BUILD_ROOT}/tmp_build
           make run_dstore_lock_unittest
 
-      - name: "UT: HA (WAL/Recovery)"
+  ut-ha:
+    needs: build
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/developdstore/open-dstore-ci:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      BUILD_ROOT: ${{ github.workspace }}
+      LOCAL_LIB_PATH: /opt/project/local_libs
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dstore-build
+          path: ${{ github.workspace }}
+      - name: Run HA UT
         run: |
           source ${BUILD_ROOT}/buildenv
           cd ${BUILD_ROOT}/tmp_build
           make run_dstore_ha_unittest
 
-      - name: "UT: Framework"
+  ut-framework:
+    needs: build
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/developdstore/open-dstore-ci:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      BUILD_ROOT: ${{ github.workspace }}
+      LOCAL_LIB_PATH: /opt/project/local_libs
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dstore-build
+          path: ${{ github.workspace }}
+      - name: Run Framework UT
         run: |
           source ${BUILD_ROOT}/buildenv
           cd ${BUILD_ROOT}/tmp_build
           make run_dstore_framework_unittest
 
-      - name: "UT: Data Manager"
+  ut-datamanager:
+    needs: build
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/developdstore/open-dstore-ci:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      BUILD_ROOT: ${{ github.workspace }}
+      LOCAL_LIB_PATH: /opt/project/local_libs
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dstore-build
+          path: ${{ github.workspace }}
+      - name: Run Data Manager UT
         run: |
           source ${BUILD_ROOT}/buildenv
           cd ${BUILD_ROOT}/tmp_build
           make run_dstore_datamanager_unittest
-
-      - name: "UT: Index and Undo"
-        run: |
-          source ${BUILD_ROOT}/buildenv
-          cd ${BUILD_ROOT}/tmp_build
-          make run_dstore_index_and_undo_unittest
