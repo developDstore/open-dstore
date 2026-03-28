@@ -5,75 +5,28 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  ut-buffer:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/developdstore/open-dstore-ci:latest
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-
     defaults:
       run:
         shell: bash
-
     env:
       BUILD_ROOT: ${{ github.workspace }}
       LOCAL_LIB_PATH: /opt/project/local_libs
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Build utils
+      - uses: actions/checkout@v4
+      - name: Build
         run: |
           source ${BUILD_ROOT}/buildenv
-          cd ${BUILD_ROOT}/utils
-          bash build.sh -m release
-
-      - name: Build dstore (debug with UT)
-        run: |
-          source ${BUILD_ROOT}/buildenv
-          cd ${BUILD_ROOT}
-          mkdir -p tmp_build && cd tmp_build
+          cd ${BUILD_ROOT}/utils && bash build.sh -m release
+          cd ${BUILD_ROOT} && mkdir -p tmp_build && cd tmp_build
           cmake .. -DCMAKE_BUILD_TYPE=debug -DUTILS_PATH=../utils/output -DENABLE_UT=ON
           make -sj$(nproc) install
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: dstore-build
-          path: |
-            ${{ github.workspace }}/tmp_build
-            ${{ github.workspace }}/utils/output
-            ${{ github.workspace }}/output
-            ${{ github.workspace }}/tests
-            ${{ github.workspace }}/buildenv
-            ${{ github.workspace }}/build_script
-          retention-days: 1
-
-  ut-buffer:
-    needs: build
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/developdstore/open-dstore-ci:latest
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    defaults:
-      run:
-        shell: bash
-    env:
-      BUILD_ROOT: ${{ github.workspace }}
-      LOCAL_LIB_PATH: /opt/project/local_libs
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dstore-build
-          path: ${{ github.workspace }}
       - name: Run Buffer UT
         run: |
           source ${BUILD_ROOT}/buildenv
@@ -81,7 +34,6 @@ jobs:
           make run_dstore_buffer_unittest
 
   ut-transaction:
-    needs: build
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/developdstore/open-dstore-ci:latest
@@ -95,13 +47,14 @@ jobs:
       BUILD_ROOT: ${{ github.workspace }}
       LOCAL_LIB_PATH: /opt/project/local_libs
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dstore-build
-          path: ${{ github.workspace }}
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}/utils && bash build.sh -m release
+          cd ${BUILD_ROOT} && mkdir -p tmp_build && cd tmp_build
+          cmake .. -DCMAKE_BUILD_TYPE=debug -DUTILS_PATH=../utils/output -DENABLE_UT=ON
+          make -sj$(nproc) install
       - name: Run Transaction UT
         run: |
           source ${BUILD_ROOT}/buildenv
@@ -109,7 +62,6 @@ jobs:
           make run_dstore_xact_unittest
 
   ut-index:
-    needs: build
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/developdstore/open-dstore-ci:latest
@@ -123,13 +75,14 @@ jobs:
       BUILD_ROOT: ${{ github.workspace }}
       LOCAL_LIB_PATH: /opt/project/local_libs
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dstore-build
-          path: ${{ github.workspace }}
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}/utils && bash build.sh -m release
+          cd ${BUILD_ROOT} && mkdir -p tmp_build && cd tmp_build
+          cmake .. -DCMAKE_BUILD_TYPE=debug -DUTILS_PATH=../utils/output -DENABLE_UT=ON
+          make -sj$(nproc) install
       - name: Run Index UT
         run: |
           source ${BUILD_ROOT}/buildenv
@@ -137,7 +90,6 @@ jobs:
           make run_dstore_index_unittest
 
   ut-lock:
-    needs: build
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/developdstore/open-dstore-ci:latest
@@ -151,13 +103,14 @@ jobs:
       BUILD_ROOT: ${{ github.workspace }}
       LOCAL_LIB_PATH: /opt/project/local_libs
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dstore-build
-          path: ${{ github.workspace }}
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}/utils && bash build.sh -m release
+          cd ${BUILD_ROOT} && mkdir -p tmp_build && cd tmp_build
+          cmake .. -DCMAKE_BUILD_TYPE=debug -DUTILS_PATH=../utils/output -DENABLE_UT=ON
+          make -sj$(nproc) install
       - name: Run Lock UT
         run: |
           source ${BUILD_ROOT}/buildenv
@@ -165,7 +118,6 @@ jobs:
           make run_dstore_lock_unittest
 
   ut-ha:
-    needs: build
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/developdstore/open-dstore-ci:latest
@@ -179,13 +131,14 @@ jobs:
       BUILD_ROOT: ${{ github.workspace }}
       LOCAL_LIB_PATH: /opt/project/local_libs
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dstore-build
-          path: ${{ github.workspace }}
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}/utils && bash build.sh -m release
+          cd ${BUILD_ROOT} && mkdir -p tmp_build && cd tmp_build
+          cmake .. -DCMAKE_BUILD_TYPE=debug -DUTILS_PATH=../utils/output -DENABLE_UT=ON
+          make -sj$(nproc) install
       - name: Run HA UT
         run: |
           source ${BUILD_ROOT}/buildenv
@@ -193,7 +146,6 @@ jobs:
           make run_dstore_ha_unittest
 
   ut-framework:
-    needs: build
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/developdstore/open-dstore-ci:latest
@@ -207,13 +159,14 @@ jobs:
       BUILD_ROOT: ${{ github.workspace }}
       LOCAL_LIB_PATH: /opt/project/local_libs
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dstore-build
-          path: ${{ github.workspace }}
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}/utils && bash build.sh -m release
+          cd ${BUILD_ROOT} && mkdir -p tmp_build && cd tmp_build
+          cmake .. -DCMAKE_BUILD_TYPE=debug -DUTILS_PATH=../utils/output -DENABLE_UT=ON
+          make -sj$(nproc) install
       - name: Run Framework UT
         run: |
           source ${BUILD_ROOT}/buildenv
@@ -221,7 +174,6 @@ jobs:
           make run_dstore_framework_unittest
 
   ut-datamanager:
-    needs: build
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/developdstore/open-dstore-ci:latest
@@ -235,13 +187,14 @@ jobs:
       BUILD_ROOT: ${{ github.workspace }}
       LOCAL_LIB_PATH: /opt/project/local_libs
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dstore-build
-          path: ${{ github.workspace }}
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}/utils && bash build.sh -m release
+          cd ${BUILD_ROOT} && mkdir -p tmp_build && cd tmp_build
+          cmake .. -DCMAKE_BUILD_TYPE=debug -DUTILS_PATH=../utils/output -DENABLE_UT=ON
+          make -sj$(nproc) install
       - name: Run Data Manager UT
         run: |
           source ${BUILD_ROOT}/buildenv
