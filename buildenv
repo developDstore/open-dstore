@@ -22,7 +22,7 @@ fi
 #-------------------------------------------
 # code path
 #-------------------------------------------
-export BUILD_ROOT=/home/ub18/develop/open-dstore
+export BUILD_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 export LOCAL_LIB_PATH=$BUILD_ROOT/../local_libs
 
 #-------------------------------------------
