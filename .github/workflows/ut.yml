@@ -200,3 +200,31 @@ jobs:
           source ${BUILD_ROOT}/buildenv
           cd ${BUILD_ROOT}/tmp_build
           make run_dstore_datamanager_unittest
+
+  ut-undo:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/developdstore/open-dstore-ci:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      BUILD_ROOT: ${{ github.workspace }}
+      LOCAL_LIB_PATH: /opt/project/local_libs
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}/utils && bash build.sh -m release
+          cd ${BUILD_ROOT} && mkdir -p tmp_build && cd tmp_build
+          cmake .. -DCMAKE_BUILD_TYPE=debug -DUTILS_PATH=../utils/output -DENABLE_UT=ON
+          make -sj$(nproc) install
+      - name: Run Undo UT
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}/tmp_build
+          make run_dstore_undo_unittest
