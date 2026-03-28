@@ -1,5 +1,5 @@
 #-------------------------------------------
-# platform
+# platform (CI pipeline verification)
 #-------------------------------------------
 # Obtain the operating system name and version.
 if [ -f /etc/os-release ]; then
