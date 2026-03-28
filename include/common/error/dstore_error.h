@@ -47,8 +47,14 @@ public:
     DSTORE_EXPORT void SetErrorCodeOnly(ErrorCode errorCode);
     void SetErrorWithNodeId(const char *fileName, int lineNumber, const char *functionName, NodeId nodeId,
         ErrorCode errorCode, ...);
+    void SetErrorCommon(const char *fileName, int lineNumber, const char *functionName, ErrorCode errorCode,
+        va_list args);
 
     ErrorCode GetErrorCode() const;
+    void SetErrorNodeId(NodeId nodeId)
+    {
+        m_errorNodeId = nodeId;
+    }
     const char *GetMessage() const;
     const char *GetErrorName() const;
     void GetLocation(const char *&fileName, int &lineNumber) const;
@@ -62,8 +68,6 @@ public:
     static const size_t MAX_FUNCTIONNAME_LEN = 256;
 
 private:
-    void SetErrorCommon(const char *fileName, int lineNumber, const char *functionName, ErrorCode errorCode,
-        va_list args);
     ErrorDetails  **m_error_code_map;
     int           m_error_code_map_size;
     ErrorCode     m_error_code = STORAGE_OK;
