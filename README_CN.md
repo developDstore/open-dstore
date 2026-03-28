@@ -1,5 +1,7 @@
 **Dstore是一个可独立编译，独立测试的数据库存储引擎组件。**
 
+[![DStore Compile](https://github.com/developDstore/open-dstore/actions/workflows/ci.yml/badge.svg)](https://github.com/developDstore/open-dstore/actions/workflows/ci.yml) [![DStore UT](https://github.com/developDstore/open-dstore/actions/workflows/ut.yml/badge.svg)](https://github.com/developDstore/open-dstore/actions/workflows/ut.yml) [![Coverage](https://github.com/developDstore/open-dstore/actions/workflows/coverage.yml/badge.svg)](https://github.com/developDstore/open-dstore/actions/workflows/coverage.yml)
+
 > **中文** | [English](README.md)
 
 ---

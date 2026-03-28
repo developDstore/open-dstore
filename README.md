@@ -1,5 +1,7 @@
 **Dstore is a self-contained, independently compilable and testable database storage engine component.**
 
+[![DStore Compile](https://github.com/developDstore/open-dstore/actions/workflows/ci.yml/badge.svg)](https://github.com/developDstore/open-dstore/actions/workflows/ci.yml) [![DStore UT](https://github.com/developDstore/open-dstore/actions/workflows/ut.yml/badge.svg)](https://github.com/developDstore/open-dstore/actions/workflows/ut.yml) [![Coverage](https://github.com/developDstore/open-dstore/actions/workflows/coverage.yml/badge.svg)](https://github.com/developDstore/open-dstore/actions/workflows/coverage.yml)
+
 > [中文](README_CN.md) | **English**
 
 ---

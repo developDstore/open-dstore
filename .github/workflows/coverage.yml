@@ -1,0 +1,67 @@
+name: DStore Coverage
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/developdstore/open-dstore-ci:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    defaults:
+      run:
+        shell: bash
+
+    env:
+      BUILD_ROOT: ${{ github.workspace }}
+      LOCAL_LIB_PATH: /opt/project/local_libs
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install lcov
+        run: apt-get update && apt-get install -y lcov
+
+      - name: Build utils
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}/utils
+          bash build.sh -m release
+
+      - name: Build dstore (coverage mode)
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}
+          mkdir -p tmp_build && cd tmp_build
+          cmake .. -DCMAKE_BUILD_TYPE=debug -DUTILS_PATH=../utils/output -DENABLE_UT=ON -DENABLE_LCOV=ON
+          make -sj$(nproc) install
+
+      - name: Run all unit tests
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}/tmp_build
+          make run_dstore_ut_all || true
+
+      - name: Collect coverage
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}/tmp_build
+          lcov --capture --directory . --output-file coverage.info \
+               --gcov-tool ${GCCFOLDER}/gcc/bin/gcov
+          lcov --remove coverage.info '/usr/*' '*/local_libs/*' '*/tests/*' '*/utils/*' \
+               --output-file coverage_filtered.info
+          lcov --list coverage_filtered.info
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: tmp_build/coverage_filtered.info
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
