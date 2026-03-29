@@ -1,0 +1,415 @@
+name: DStore Coverage
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  cov-buffer:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/developdstore/open-dstore-ci:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      BUILD_ROOT: ${{ github.workspace }}
+      LOCAL_LIB_PATH: /opt/project/local_libs
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}/utils && bash build.sh -m release
+          cd ${BUILD_ROOT} && mkdir -p tmp_build && cd tmp_build
+          cmake .. -DCMAKE_BUILD_TYPE=debug -DUTILS_PATH=../utils/output -DENABLE_UT=ON -DENABLE_LCOV=ON
+          make -sj$(nproc) install
+      - name: Run Buffer UT
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}/tmp_build
+          make run_dstore_buffer_unittest || true
+      - name: Collect coverage
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          apt-get update -qq && apt-get install -y -qq lcov > /dev/null
+          cd ${BUILD_ROOT}/tmp_build
+          lcov --capture --directory . --output-file coverage.info --gcov-tool ${GCCFOLDER}/gcc/bin/gcov --rc lcov_branch_coverage=1 --quiet
+          lcov --remove coverage.info '/usr/*' '*/local_libs/*' '*/tests/*' '*/utils/*' --output-file coverage.info --rc lcov_branch_coverage=1 --quiet
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cov-buffer
+          path: tmp_build/coverage.info
+          retention-days: 1
+
+  cov-transaction:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/developdstore/open-dstore-ci:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      BUILD_ROOT: ${{ github.workspace }}
+      LOCAL_LIB_PATH: /opt/project/local_libs
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}/utils && bash build.sh -m release
+          cd ${BUILD_ROOT} && mkdir -p tmp_build && cd tmp_build
+          cmake .. -DCMAKE_BUILD_TYPE=debug -DUTILS_PATH=../utils/output -DENABLE_UT=ON -DENABLE_LCOV=ON
+          make -sj$(nproc) install
+      - name: Run Transaction UT
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}/tmp_build
+          make run_dstore_xact_unittest || true
+      - name: Collect coverage
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          apt-get update -qq && apt-get install -y -qq lcov > /dev/null
+          cd ${BUILD_ROOT}/tmp_build
+          lcov --capture --directory . --output-file coverage.info --gcov-tool ${GCCFOLDER}/gcc/bin/gcov --rc lcov_branch_coverage=1 --quiet
+          lcov --remove coverage.info '/usr/*' '*/local_libs/*' '*/tests/*' '*/utils/*' --output-file coverage.info --rc lcov_branch_coverage=1 --quiet
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cov-transaction
+          path: tmp_build/coverage.info
+          retention-days: 1
+
+  cov-index:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/developdstore/open-dstore-ci:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      BUILD_ROOT: ${{ github.workspace }}
+      LOCAL_LIB_PATH: /opt/project/local_libs
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}/utils && bash build.sh -m release
+          cd ${BUILD_ROOT} && mkdir -p tmp_build && cd tmp_build
+          cmake .. -DCMAKE_BUILD_TYPE=debug -DUTILS_PATH=../utils/output -DENABLE_UT=ON -DENABLE_LCOV=ON
+          make -sj$(nproc) install
+      - name: Run Index UT
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}/tmp_build
+          make run_dstore_index_unittest || true
+      - name: Collect coverage
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          apt-get update -qq && apt-get install -y -qq lcov > /dev/null
+          cd ${BUILD_ROOT}/tmp_build
+          lcov --capture --directory . --output-file coverage.info --gcov-tool ${GCCFOLDER}/gcc/bin/gcov --rc lcov_branch_coverage=1 --quiet
+          lcov --remove coverage.info '/usr/*' '*/local_libs/*' '*/tests/*' '*/utils/*' --output-file coverage.info --rc lcov_branch_coverage=1 --quiet
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cov-index
+          path: tmp_build/coverage.info
+          retention-days: 1
+
+  cov-lock:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/developdstore/open-dstore-ci:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      BUILD_ROOT: ${{ github.workspace }}
+      LOCAL_LIB_PATH: /opt/project/local_libs
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}/utils && bash build.sh -m release
+          cd ${BUILD_ROOT} && mkdir -p tmp_build && cd tmp_build
+          cmake .. -DCMAKE_BUILD_TYPE=debug -DUTILS_PATH=../utils/output -DENABLE_UT=ON -DENABLE_LCOV=ON
+          make -sj$(nproc) install
+      - name: Run Lock UT
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}/tmp_build
+          make run_dstore_lock_unittest || true
+      - name: Collect coverage
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          apt-get update -qq && apt-get install -y -qq lcov > /dev/null
+          cd ${BUILD_ROOT}/tmp_build
+          lcov --capture --directory . --output-file coverage.info --gcov-tool ${GCCFOLDER}/gcc/bin/gcov --rc lcov_branch_coverage=1 --quiet
+          lcov --remove coverage.info '/usr/*' '*/local_libs/*' '*/tests/*' '*/utils/*' --output-file coverage.info --rc lcov_branch_coverage=1 --quiet
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cov-lock
+          path: tmp_build/coverage.info
+          retention-days: 1
+
+  cov-ha:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/developdstore/open-dstore-ci:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      BUILD_ROOT: ${{ github.workspace }}
+      LOCAL_LIB_PATH: /opt/project/local_libs
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}/utils && bash build.sh -m release
+          cd ${BUILD_ROOT} && mkdir -p tmp_build && cd tmp_build
+          cmake .. -DCMAKE_BUILD_TYPE=debug -DUTILS_PATH=../utils/output -DENABLE_UT=ON -DENABLE_LCOV=ON
+          make -sj$(nproc) install
+      - name: Run HA UT
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}/tmp_build
+          make run_dstore_ha_unittest || true
+      - name: Collect coverage
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          apt-get update -qq && apt-get install -y -qq lcov > /dev/null
+          cd ${BUILD_ROOT}/tmp_build
+          lcov --capture --directory . --output-file coverage.info --gcov-tool ${GCCFOLDER}/gcc/bin/gcov --rc lcov_branch_coverage=1 --quiet
+          lcov --remove coverage.info '/usr/*' '*/local_libs/*' '*/tests/*' '*/utils/*' --output-file coverage.info --rc lcov_branch_coverage=1 --quiet
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cov-ha
+          path: tmp_build/coverage.info
+          retention-days: 1
+
+  cov-framework:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/developdstore/open-dstore-ci:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      BUILD_ROOT: ${{ github.workspace }}
+      LOCAL_LIB_PATH: /opt/project/local_libs
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}/utils && bash build.sh -m release
+          cd ${BUILD_ROOT} && mkdir -p tmp_build && cd tmp_build
+          cmake .. -DCMAKE_BUILD_TYPE=debug -DUTILS_PATH=../utils/output -DENABLE_UT=ON -DENABLE_LCOV=ON
+          make -sj$(nproc) install
+      - name: Run Framework UT
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}/tmp_build
+          make run_dstore_framework_unittest || true
+      - name: Collect coverage
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          apt-get update -qq && apt-get install -y -qq lcov > /dev/null
+          cd ${BUILD_ROOT}/tmp_build
+          lcov --capture --directory . --output-file coverage.info --gcov-tool ${GCCFOLDER}/gcc/bin/gcov --rc lcov_branch_coverage=1 --quiet
+          lcov --remove coverage.info '/usr/*' '*/local_libs/*' '*/tests/*' '*/utils/*' --output-file coverage.info --rc lcov_branch_coverage=1 --quiet
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cov-framework
+          path: tmp_build/coverage.info
+          retention-days: 1
+
+  cov-datamanager:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/developdstore/open-dstore-ci:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      BUILD_ROOT: ${{ github.workspace }}
+      LOCAL_LIB_PATH: /opt/project/local_libs
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}/utils && bash build.sh -m release
+          cd ${BUILD_ROOT} && mkdir -p tmp_build && cd tmp_build
+          cmake .. -DCMAKE_BUILD_TYPE=debug -DUTILS_PATH=../utils/output -DENABLE_UT=ON -DENABLE_LCOV=ON
+          make -sj$(nproc) install
+      - name: Run Data Manager UT
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}/tmp_build
+          make run_dstore_datamanager_unittest || true
+      - name: Collect coverage
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          apt-get update -qq && apt-get install -y -qq lcov > /dev/null
+          cd ${BUILD_ROOT}/tmp_build
+          lcov --capture --directory . --output-file coverage.info --gcov-tool ${GCCFOLDER}/gcc/bin/gcov --rc lcov_branch_coverage=1 --quiet
+          lcov --remove coverage.info '/usr/*' '*/local_libs/*' '*/tests/*' '*/utils/*' --output-file coverage.info --rc lcov_branch_coverage=1 --quiet
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cov-datamanager
+          path: tmp_build/coverage.info
+          retention-days: 1
+
+  cov-undo:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/developdstore/open-dstore-ci:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      BUILD_ROOT: ${{ github.workspace }}
+      LOCAL_LIB_PATH: /opt/project/local_libs
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}/utils && bash build.sh -m release
+          cd ${BUILD_ROOT} && mkdir -p tmp_build && cd tmp_build
+          cmake .. -DCMAKE_BUILD_TYPE=debug -DUTILS_PATH=../utils/output -DENABLE_UT=ON -DENABLE_LCOV=ON
+          make -sj$(nproc) install
+      - name: Run Undo UT
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          cd ${BUILD_ROOT}/tmp_build
+          make run_dstore_undo_unittest || true
+      - name: Collect coverage
+        run: |
+          source ${BUILD_ROOT}/buildenv
+          apt-get update -qq && apt-get install -y -qq lcov > /dev/null
+          cd ${BUILD_ROOT}/tmp_build
+          lcov --capture --directory . --output-file coverage.info --gcov-tool ${GCCFOLDER}/gcc/bin/gcov --rc lcov_branch_coverage=1 --quiet
+          lcov --remove coverage.info '/usr/*' '*/local_libs/*' '*/tests/*' '*/utils/*' --output-file coverage.info --rc lcov_branch_coverage=1 --quiet
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cov-undo
+          path: tmp_build/coverage.info
+          retention-days: 1
+
+  coverage-report:
+    needs: [cov-buffer, cov-transaction, cov-index, cov-lock, cov-ha, cov-framework, cov-datamanager, cov-undo]
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Install lcov
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq lcov > /dev/null
+
+      - name: Download all coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: coverage-parts
+          pattern: cov-*
+
+      - name: Merge coverage reports
+        id: coverage
+        run: |
+          args=""
+          for f in coverage-parts/*/coverage.info; do
+            args="$args --add-tracefile $f"
+          done
+          lcov $args --output-file merged.info --rc lcov_branch_coverage=1 --quiet
+
+          # Extract overall coverage percentage
+          SUMMARY=$(lcov --summary merged.info --rc lcov_branch_coverage=1 2>&1)
+          LINES_PCT=$(echo "$SUMMARY" | grep 'lines' | sed 's/.*: //' | sed 's/%.*//')
+          FUNCS_PCT=$(echo "$SUMMARY" | grep 'functions' | sed 's/.*: //' | sed 's/%.*//')
+          BRANCHES_PCT=$(echo "$SUMMARY" | grep 'branches' | sed 's/.*: //' | sed 's/%.*//')
+
+          echo "lines_pct=${LINES_PCT}" >> $GITHUB_OUTPUT
+          echo "funcs_pct=${FUNCS_PCT}" >> $GITHUB_OUTPUT
+          echo "branches_pct=${BRANCHES_PCT}" >> $GITHUB_OUTPUT
+
+          # Write Job Summary
+          echo "## Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Coverage |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|----------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Lines | ${LINES_PCT}% |" >> $GITHUB_STEP_SUMMARY
+          echo "| Functions | ${FUNCS_PCT}% |" >> $GITHUB_STEP_SUMMARY
+          echo "| Branches | ${BRANCHES_PCT}% |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Details" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          lcov --list merged.info --rc lcov_branch_coverage=1 >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment coverage on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const lines = '${{ steps.coverage.outputs.lines_pct }}';
+            const funcs = '${{ steps.coverage.outputs.funcs_pct }}';
+            const branches = '${{ steps.coverage.outputs.branches_pct }}';
+            const body = `## Coverage Report\n\n| Metric | Coverage |\n|--------|----------|\n| Lines | ${lines}% |\n| Functions | ${funcs}% |\n| Branches | ${branches}% |\n\n> Generated by DStore Coverage pipeline`;
+
+            // Find and update existing comment or create new one
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.body.includes('## Coverage Report'));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body,
+              });
+            }
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: merged.info
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

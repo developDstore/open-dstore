@@ -156,8 +156,9 @@ RUN wget -q --tries=3 --timeout=30 https://github.com/google/googletest/archive/
     tar xf gtest.tar.gz && cd googletest-* && mkdir build && cd build && \
     cmake .. \
         -DCMAKE_INSTALL_PREFIX=${LOCAL_LIB_PATH}/gtest \
-        -DCMAKE_BUILD_TYPE=Debug \
+        -DCMAKE_BUILD_TYPE=Release \
         -DBUILD_SHARED_LIBS=OFF \
+        -DCMAKE_CXX_FLAGS="-D_GLIBCXX_USE_CXX11_ABI=0" \
         -DCMAKE_CXX_COMPILER=${CXX} \
         -DCMAKE_C_COMPILER=${CC} && \
     make -j$(nproc) && make install
@@ -182,6 +183,7 @@ RUN git clone --depth=1 https://github.com/sinojelly/mockcpp.git /tmp/mockcpp &&
         -DCMAKE_INSTALL_PREFIX=${LOCAL_LIB_PATH}/mockcpp \
         -DCMAKE_C_COMPILER=${CC} \
         -DCMAKE_CXX_COMPILER=${CXX} \
+        -DCMAKE_CXX_FLAGS="-D_GLIBCXX_USE_CXX11_ABI=0" \
         -DBUILD_SHARED_LIBS=OFF && \
     make -j$(nproc) && make install && \
     cp -r /tmp/mockcpp/3rdparty/. ${LOCAL_LIB_PATH}/mockcpp/3rdparty/
@@ -194,7 +196,7 @@ RUN rm -rf /tmp/*
 
 # Add build-dstore alias/function for root user
 # Add build-dstore and make-dstore aliases for root
-RUN echo "alias dstore-build='source ${BUILD_ROOT}/buildenv && cd ${BUILD_ROOT}/utils && bash build.sh -m debug && cd ${BUILD_ROOT} && bash build.sh -m debug -tm ut'" \
+RUN echo "alias dstore-build='source ${BUILD_ROOT}/buildenv && cd ${BUILD_ROOT}/utils && bash build.sh -m debug && cd ${BUILD_ROOT} && mkdir -p tmp_build && cd tmp_build && cmake .. -DCMAKE_BUILD_TYPE=debug -DUTILS_PATH=../utils/output -DENABLE_UT=ON && make -sj$(($(nproc)-2)) install'" \
     >> /root/.bashrc && \
     echo "alias dstore-rebuild='cd ${BUILD_ROOT}/tmp_build && make install -j\$(nproc)'" \
     >> /root/.bashrc

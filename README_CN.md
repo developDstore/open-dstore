@@ -1,5 +1,7 @@
 **Dstore是一个可独立编译，独立测试的数据库存储引擎组件。**
 
+[![DStore Compile](https://github.com/developDstore/open-dstore/actions/workflows/ci.yml/badge.svg)](https://github.com/developDstore/open-dstore/actions/workflows/ci.yml) [![DStore UT](https://github.com/developDstore/open-dstore/actions/workflows/ut.yml/badge.svg)](https://github.com/developDstore/open-dstore/actions/workflows/ut.yml) [![Coverage](https://github.com/developDstore/open-dstore/actions/workflows/coverage.yml/badge.svg)](https://github.com/developDstore/open-dstore/actions/workflows/coverage.yml)
+
 > **中文** | [English](README.md)
 
 ---
@@ -24,7 +26,7 @@ bash docker_deploy.sh --shell   # 启动容器并进入 shell
 bash docker_deploy.sh --stop    # 停止并删除容器
 ```
 
-源码目录将以绑定挂载的方式映射到容器内的 `/opt/project/dstore`。
+源码目录将以绑定挂载的方式映射到容器内的 `/opt/project/dstore` (写自己的目录)。
 
 ### 2. 进入容器
 
@@ -41,21 +43,15 @@ dstore-build
 # 或手动执行以下步骤：
 source ${BUILD_ROOT}/buildenv
 cd ${BUILD_ROOT}/utils && bash build.sh -m debug
-cd ${BUILD_ROOT}       && bash build.sh -m debug -tm ut
+cd ${BUILD_ROOT}
+mkdir -p tmp_build && cd tmp_build
+cmake .. -DCMAKE_BUILD_TYPE=debug -DUTILS_PATH=../utils/output -DENABLE_UT=ON && make -sj$(($(nproc)-2)) install
 ```
 
 构建成功后的产物：
 - `utils/output/lib/libgsutils.so` — 工具库
 - `output/lib/libdstore.so` 和 `output/lib/libdstore.a` — 存储引擎
 
-### 4. 增量编译（容器内）
-
-首次完整构建完成后，使用 `dstore-rebuild` 别名进行快速增量编译：
-
-```bash
-dstore-rebuild
-# 等价于：cd ${BUILD_ROOT}/tmp_build && make install -j$(nproc)
-```
 
 ---
 
@@ -70,6 +66,7 @@ dstore-rebuild
 ## 手动配置（不使用 Docker）
 
 如果希望在宿主机上直接构建，请按照以下步骤安装依赖并更新 `buildenv`。
+建议使用Cladue等AI辅助工具来配置环境
 
 ### 1. 环境配置
 
@@ -168,20 +165,14 @@ bash build.sh -m release   # 或：debug
 
 ```bash
 cd dstore
-bash build.sh -m release   # 或：debug
-bash build.sh -m debug -tm ut  # 带单元测试
+bash build.sh -m release   
+# 或debug：
+mkdir -p tmp_build && cd tmp_build
+cmake .. -DCMAKE_BUILD_TYPE=debug -DUTILS_PATH=../utils/output -DENABLE_UT=ON && make -sj$(($(nproc)-2)) install
 ```
 
 编译成功后，`dstore/output/lib/` 路径下应有 `libdstore.so` 与 `libdstore.a` 生成。
 
-#### 2.3 增量编译
-
-首次完整构建后，修改代码只需在 `tmp_build/` 下增量编译，无需每次从头构建：
-
-```bash
-cd dstore/tmp_build
-make -sj$(($(nproc)-2)) install
-```
 
 ---
 

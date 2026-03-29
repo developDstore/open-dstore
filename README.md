@@ -1,5 +1,7 @@
 **Dstore is a self-contained, independently compilable and testable database storage engine component.**
 
+[![DStore Compile](https://github.com/developDstore/open-dstore/actions/workflows/ci.yml/badge.svg)](https://github.com/developDstore/open-dstore/actions/workflows/ci.yml) [![DStore UT](https://github.com/developDstore/open-dstore/actions/workflows/ut.yml/badge.svg)](https://github.com/developDstore/open-dstore/actions/workflows/ut.yml) [![Coverage](https://github.com/developDstore/open-dstore/actions/workflows/coverage.yml/badge.svg)](https://github.com/developDstore/open-dstore/actions/workflows/coverage.yml)
+
 > [中文](README_CN.md) | **English**
 
 ---
@@ -41,7 +43,9 @@ dstore-build
 # Or run the steps manually:
 source ${BUILD_ROOT}/buildenv
 cd ${BUILD_ROOT}/utils && bash build.sh -m debug
-cd ${BUILD_ROOT}       && bash build.sh -m debug -tm ut
+cd ${BUILD_ROOT}
+mkdir -p tmp_build && cd tmp_build
+cmake .. -DCMAKE_BUILD_TYPE=debug -DUTILS_PATH=../utils/output -DENABLE_UT=ON && make -sj$(($(nproc)-2)) install
 ```
 
 After a successful build:
@@ -169,8 +173,10 @@ Verify that `libgsutils.so` is present under `utils/output/lib/`.
 
 ```bash
 cd dstore
-bash build.sh -m release   # or: debug
-bash build.sh -m debug -tm ut  # with unit tests
+bash build.sh -m release
+# or debug：
+mkdir -p tmp_build && cd tmp_build
+cmake .. -DCMAKE_BUILD_TYPE=debug -DUTILS_PATH=../utils/output -DENABLE_UT=ON && make -sj$(($(nproc)-2)) install
 ```
 
 After a successful build, `libdstore.so` and `libdstore.a` will be present under `dstore/output/lib/`.
