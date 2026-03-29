@@ -37,8 +37,8 @@ jobs:
           source ${BUILD_ROOT}/buildenv
           apt-get update -qq && apt-get install -y -qq lcov > /dev/null
           cd ${BUILD_ROOT}/tmp_build
-          lcov --capture --directory . --output-file coverage.info --gcov-tool ${GCCFOLDER}/gcc/bin/gcov --quiet
-          lcov --remove coverage.info '/usr/*' '*/local_libs/*' '*/tests/*' '*/utils/*' --output-file coverage.info --quiet
+          lcov --capture --directory . --output-file coverage.info --gcov-tool ${GCCFOLDER}/gcc/bin/gcov --rc lcov_branch_coverage=1 --quiet
+          lcov --remove coverage.info '/usr/*' '*/local_libs/*' '*/tests/*' '*/utils/*' --output-file coverage.info --rc lcov_branch_coverage=1 --quiet
       - uses: actions/upload-artifact@v4
         with:
           name: cov-buffer
@@ -77,8 +77,8 @@ jobs:
           source ${BUILD_ROOT}/buildenv
           apt-get update -qq && apt-get install -y -qq lcov > /dev/null
           cd ${BUILD_ROOT}/tmp_build
-          lcov --capture --directory . --output-file coverage.info --gcov-tool ${GCCFOLDER}/gcc/bin/gcov --quiet
-          lcov --remove coverage.info '/usr/*' '*/local_libs/*' '*/tests/*' '*/utils/*' --output-file coverage.info --quiet
+          lcov --capture --directory . --output-file coverage.info --gcov-tool ${GCCFOLDER}/gcc/bin/gcov --rc lcov_branch_coverage=1 --quiet
+          lcov --remove coverage.info '/usr/*' '*/local_libs/*' '*/tests/*' '*/utils/*' --output-file coverage.info --rc lcov_branch_coverage=1 --quiet
       - uses: actions/upload-artifact@v4
         with:
           name: cov-transaction
@@ -117,8 +117,8 @@ jobs:
           source ${BUILD_ROOT}/buildenv
           apt-get update -qq && apt-get install -y -qq lcov > /dev/null
           cd ${BUILD_ROOT}/tmp_build
-          lcov --capture --directory . --output-file coverage.info --gcov-tool ${GCCFOLDER}/gcc/bin/gcov --quiet
-          lcov --remove coverage.info '/usr/*' '*/local_libs/*' '*/tests/*' '*/utils/*' --output-file coverage.info --quiet
+          lcov --capture --directory . --output-file coverage.info --gcov-tool ${GCCFOLDER}/gcc/bin/gcov --rc lcov_branch_coverage=1 --quiet
+          lcov --remove coverage.info '/usr/*' '*/local_libs/*' '*/tests/*' '*/utils/*' --output-file coverage.info --rc lcov_branch_coverage=1 --quiet
       - uses: actions/upload-artifact@v4
         with:
           name: cov-index
@@ -157,8 +157,8 @@ jobs:
           source ${BUILD_ROOT}/buildenv
           apt-get update -qq && apt-get install -y -qq lcov > /dev/null
           cd ${BUILD_ROOT}/tmp_build
-          lcov --capture --directory . --output-file coverage.info --gcov-tool ${GCCFOLDER}/gcc/bin/gcov --quiet
-          lcov --remove coverage.info '/usr/*' '*/local_libs/*' '*/tests/*' '*/utils/*' --output-file coverage.info --quiet
+          lcov --capture --directory . --output-file coverage.info --gcov-tool ${GCCFOLDER}/gcc/bin/gcov --rc lcov_branch_coverage=1 --quiet
+          lcov --remove coverage.info '/usr/*' '*/local_libs/*' '*/tests/*' '*/utils/*' --output-file coverage.info --rc lcov_branch_coverage=1 --quiet
       - uses: actions/upload-artifact@v4
         with:
           name: cov-lock
@@ -197,8 +197,8 @@ jobs:
           source ${BUILD_ROOT}/buildenv
           apt-get update -qq && apt-get install -y -qq lcov > /dev/null
           cd ${BUILD_ROOT}/tmp_build
-          lcov --capture --directory . --output-file coverage.info --gcov-tool ${GCCFOLDER}/gcc/bin/gcov --quiet
-          lcov --remove coverage.info '/usr/*' '*/local_libs/*' '*/tests/*' '*/utils/*' --output-file coverage.info --quiet
+          lcov --capture --directory . --output-file coverage.info --gcov-tool ${GCCFOLDER}/gcc/bin/gcov --rc lcov_branch_coverage=1 --quiet
+          lcov --remove coverage.info '/usr/*' '*/local_libs/*' '*/tests/*' '*/utils/*' --output-file coverage.info --rc lcov_branch_coverage=1 --quiet
       - uses: actions/upload-artifact@v4
         with:
           name: cov-ha
@@ -237,8 +237,8 @@ jobs:
           source ${BUILD_ROOT}/buildenv
           apt-get update -qq && apt-get install -y -qq lcov > /dev/null
           cd ${BUILD_ROOT}/tmp_build
-          lcov --capture --directory . --output-file coverage.info --gcov-tool ${GCCFOLDER}/gcc/bin/gcov --quiet
-          lcov --remove coverage.info '/usr/*' '*/local_libs/*' '*/tests/*' '*/utils/*' --output-file coverage.info --quiet
+          lcov --capture --directory . --output-file coverage.info --gcov-tool ${GCCFOLDER}/gcc/bin/gcov --rc lcov_branch_coverage=1 --quiet
+          lcov --remove coverage.info '/usr/*' '*/local_libs/*' '*/tests/*' '*/utils/*' --output-file coverage.info --rc lcov_branch_coverage=1 --quiet
       - uses: actions/upload-artifact@v4
         with:
           name: cov-framework
@@ -277,8 +277,8 @@ jobs:
           source ${BUILD_ROOT}/buildenv
           apt-get update -qq && apt-get install -y -qq lcov > /dev/null
           cd ${BUILD_ROOT}/tmp_build
-          lcov --capture --directory . --output-file coverage.info --gcov-tool ${GCCFOLDER}/gcc/bin/gcov --quiet
-          lcov --remove coverage.info '/usr/*' '*/local_libs/*' '*/tests/*' '*/utils/*' --output-file coverage.info --quiet
+          lcov --capture --directory . --output-file coverage.info --gcov-tool ${GCCFOLDER}/gcc/bin/gcov --rc lcov_branch_coverage=1 --quiet
+          lcov --remove coverage.info '/usr/*' '*/local_libs/*' '*/tests/*' '*/utils/*' --output-file coverage.info --rc lcov_branch_coverage=1 --quiet
       - uses: actions/upload-artifact@v4
         with:
           name: cov-datamanager
@@ -317,8 +317,8 @@ jobs:
           source ${BUILD_ROOT}/buildenv
           apt-get update -qq && apt-get install -y -qq lcov > /dev/null
           cd ${BUILD_ROOT}/tmp_build
-          lcov --capture --directory . --output-file coverage.info --gcov-tool ${GCCFOLDER}/gcc/bin/gcov --quiet
-          lcov --remove coverage.info '/usr/*' '*/local_libs/*' '*/tests/*' '*/utils/*' --output-file coverage.info --quiet
+          lcov --capture --directory . --output-file coverage.info --gcov-tool ${GCCFOLDER}/gcc/bin/gcov --rc lcov_branch_coverage=1 --quiet
+          lcov --remove coverage.info '/usr/*' '*/local_libs/*' '*/tests/*' '*/utils/*' --output-file coverage.info --rc lcov_branch_coverage=1 --quiet
       - uses: actions/upload-artifact@v4
         with:
           name: cov-undo
@@ -347,10 +347,10 @@ jobs:
           for f in coverage-parts/*/coverage.info; do
             args="$args --add-tracefile $f"
           done
-          lcov $args --output-file merged.info --quiet
+          lcov $args --output-file merged.info --rc lcov_branch_coverage=1 --quiet
 
           # Extract overall coverage percentage
-          SUMMARY=$(lcov --summary merged.info 2>&1)
+          SUMMARY=$(lcov --summary merged.info --rc lcov_branch_coverage=1 2>&1)
           LINES_PCT=$(echo "$SUMMARY" | grep 'lines' | sed 's/.*: //' | sed 's/%.*//')
           FUNCS_PCT=$(echo "$SUMMARY" | grep 'functions' | sed 's/.*: //' | sed 's/%.*//')
           BRANCHES_PCT=$(echo "$SUMMARY" | grep 'branches' | sed 's/.*: //' | sed 's/%.*//')
@@ -370,7 +370,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Details" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          lcov --list merged.info >> $GITHUB_STEP_SUMMARY
+          lcov --list merged.info --rc lcov_branch_coverage=1 >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Comment coverage on PR
