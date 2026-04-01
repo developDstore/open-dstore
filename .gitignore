@@ -1,8 +1,14 @@
 .idea
 .claude
+.gemini
+.ai
 .DS_Store
 tmp_build
 output
+openspec
+
+GEMINI.md
+CLAUDE.md
 
 /include/config.h
 /interface/framework/dstore_io_event.h
