@@ -292,7 +292,7 @@ public:
             bool ignoreCheckLevel = false)
             : m_stat(stat), m_level(level), m_ignoreCheckLevel(ignoreCheckLevel)
         {
-#ifndef UT
+#ifdef ENABLE_PERF_STAT
             if (startNow) {
                 Start();
             }
@@ -317,7 +317,7 @@ public:
 
         inline void Start(UNUSE_PARAM bool enablePerf = true)
         {
-#ifndef UT
+#ifdef ENABLE_PERF_STAT
             if (!enablePerf || m_started) {
                 return;
             }
@@ -332,7 +332,7 @@ public:
 
         inline void End(UNUSE_PARAM LatencyStat *stat = nullptr) noexcept
         {
-#ifndef UT
+#ifdef ENABLE_PERF_STAT
             if (!m_ignoreCheckLevel && m_level < PerfGlobalLevel::GetInstance().GetPerfLevel()) {
                 return;
             }
