@@ -1,4 +1,5 @@
 #cmakedefine DSTORE_USE_ASSERT_CHECKING
+#cmakedefine ENABLE_PERF_STAT
 #cmakedefine UT
 #cmakedefine DSTORE_TEST_TOOL
 #cmakedefine EMBEDDED
