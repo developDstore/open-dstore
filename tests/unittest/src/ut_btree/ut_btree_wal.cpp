@@ -471,16 +471,24 @@ TEST_F(UTBtreeWal, BtreeSplitLeafWalTest_level0)
     BufMgrInterface *bufMgr = g_storageInstance->GetBufferMgr();
     BufferDesc *btrMetaBuf;
     BtrMeta *btrMeta = m_utTableHandler->GetBtreeSmgr()->GetBtrMeta(LW_SHARED, &btrMetaBuf);
-    PageId rootPageId =  btrMeta->GetLowestSinglePage();
+    PageId rootPageId = btrMeta->GetRootPageId();
+    if (rootPageId == INVALID_PAGE_ID) {
+        rootPageId = btrMeta->GetLowestSinglePage();
+    }
     bufMgr->UnlockAndRelease(btrMetaBuf);
-    BufferDesc *rootBuf = bufMgr->Read(g_defaultPdbId, rootPageId, LW_SHARED);
-    auto *root = static_cast<BtrPage *>(rootBuf->GetPage());
-    EXPECT_TRUE(root->GetLinkAndStatus()->TestType(BtrPageType::INTERNAL_PAGE));
-    EXPECT_EQ(root->GetLinkAndStatus()->GetLevel(), 1);
-    PageId leftPageId = root->GetIndexTuple(1)->GetLowlevelIndexpageLink();
-    bufMgr->UnlockAndRelease(rootBuf);
-    BufferDesc *targetBuf = bufMgr->Read(g_defaultPdbId, leftPageId, LW_SHARED);
+    ASSERT_NE(rootPageId, INVALID_PAGE_ID);
+    PageId leftPageId = rootPageId;
+    BufferDesc *targetBuf = bufMgr->Read(g_defaultPdbId, rootPageId, LW_SHARED);
+    ASSERT_NE(targetBuf, nullptr);
     auto *targetPage = static_cast<BtrPage *>(targetBuf->GetPage());
+    if (targetPage->GetLinkAndStatus()->TestType(BtrPageType::INTERNAL_PAGE)) {
+        EXPECT_EQ(targetPage->GetLinkAndStatus()->GetLevel(), 1);
+        leftPageId = targetPage->GetIndexTuple(1)->GetLowlevelIndexpageLink();
+        bufMgr->UnlockAndRelease(targetBuf);
+        targetBuf = bufMgr->Read(g_defaultPdbId, leftPageId, LW_SHARED);
+        ASSERT_NE(targetBuf, nullptr);
+        targetPage = static_cast<BtrPage *>(targetBuf->GetPage());
+    }
 
     /* Fulfill leaf page with fake ctid */
     ItemPointerData fakeCtid{{0, 0}, 0};

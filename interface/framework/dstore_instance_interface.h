@@ -291,6 +291,7 @@ struct StorageGUC {
     int pageVersionPartitionNum;    /* AntiCache : the partiton number of anticache hashtable */
     bool enableStmtTrack;
     bool enableTrackIOTiming;
+    bool enableHeapCrFastskipByPageCsn;
     double candidateSafePercent;
     uint32_t lruScanDepth;
 };

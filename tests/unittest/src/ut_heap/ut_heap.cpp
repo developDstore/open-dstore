@@ -901,3 +901,308 @@ TEST_F(UTHeap, TxnAbortTest_level0)
     }
 }
 
+TEST_F(UTHeap, UT_HCR_FASTSKIP_009_level0)
+{
+    HeapPage page {};
+    page.Init(0, PageType::HEAP_PAGE_TYPE, INVALID_PAGE_ID);
+    page.SetDataHeaderSize(HEAP_PAGE_HEADER_SIZE);
+    page.m_header.m_lower = page.DataHeaderSize();
+    page.AllocateTdSpace();
+
+    page.SetHeapPageGenerationFirstInsertCsn(COMMITSEQNO_FIRST_NORMAL + 1);
+    ASSERT_EQ(page.GetHeapPageGenerationFirstInsertCsn(), COMMITSEQNO_FIRST_NORMAL + 1);
+}
+
+TEST_F(UTHeap, UT_HCR_FASTSKIP_001_level0)
+{
+    Transaction *txn = thrd->GetActiveTransaction();
+    txn->Start();
+    txn->SetSnapshotCsn();
+
+    HeapPage page {};
+    page.Init(0, PageType::HEAP_PAGE_TYPE, INVALID_PAGE_ID);
+    page.SetDataHeaderSize(HEAP_PAGE_HEADER_SIZE);
+    page.m_header.m_lower = page.DataHeaderSize();
+    page.AllocateTdSpace();
+    page.SetHeapPageGenerationFirstInsertCsn(COMMITSEQNO_FIRST_NORMAL + 1);
+
+    SnapshotData snapshot {SnapshotType::SNAPSHOT_MVCC, COMMITSEQNO_FIRST_NORMAL, INVALID_CID};
+    CRContext crCtx {g_defaultPdbId, INVALID_CSN, nullptr, nullptr, nullptr, false, false, &snapshot,
+        txn->GetCurrentXid()};
+    CommitSeqNo firstInsertTxnCsn = INVALID_CSN;
+    auto decision = page.TryFastSkipByPageGenerationFirstInsertXid(txn, &crCtx, firstInsertTxnCsn);
+    ASSERT_EQ(decision, HeapCrFastSkipDecision::SKIP_ALL_INVISIBLE);
+
+    txn->Abort();
+}
+
+TEST_F(UTHeap, UT_HCR_FASTSKIP_003_level0)
+{
+    Transaction *txn = thrd->GetActiveTransaction();
+    txn->Start();
+    txn->SetSnapshotCsn();
+
+    HeapPage page {};
+    page.Init(0, PageType::HEAP_PAGE_TYPE, INVALID_PAGE_ID);
+    page.SetDataHeaderSize(HEAP_PAGE_HEADER_SIZE);
+    page.m_header.m_lower = page.DataHeaderSize();
+    page.AllocateTdSpace();
+    page.SetHeapPageGenerationFirstInsertCsn(COMMITSEQNO_FIRST_NORMAL + 1);
+
+    SnapshotData snapshot {SnapshotType::SNAPSHOT_MVCC, MAX_COMMITSEQNO, INVALID_CID};
+    CRContext crCtx {g_defaultPdbId, INVALID_CSN, nullptr, nullptr, nullptr, false, false, &snapshot,
+        txn->GetCurrentXid()};
+    CommitSeqNo firstInsertTxnCsn = INVALID_CSN;
+    auto decision = page.TryFastSkipByPageGenerationFirstInsertXid(txn, &crCtx, firstInsertTxnCsn);
+    ASSERT_EQ(decision, HeapCrFastSkipDecision::CONTINUE_NORMAL);
+
+    txn->Abort();
+}
+
+TEST_F(UTHeap, UT_HCR_FASTSKIP_002_level0)
+{
+    Transaction *txn = thrd->GetActiveTransaction();
+    txn->Start();
+    txn->SetSnapshotCsn();
+
+    HeapPage page {};
+    page.Init(0, PageType::HEAP_PAGE_TYPE, INVALID_PAGE_ID);
+    page.SetDataHeaderSize(HEAP_PAGE_HEADER_SIZE);
+    page.m_header.m_lower = page.DataHeaderSize();
+    page.AllocateTdSpace();
+    page.SetHeapPageGenerationFirstInsertCsn(COMMITSEQNO_FIRST_NORMAL + 1);
+
+    HeapTuple *heapTuple = m_utTableHandler->GenerateSpecificHeapTuple("mixed-history");
+    HeapDiskTuple *diskTuple = heapTuple->GetDiskTuple();
+    diskTuple->SetTdId(0);
+    diskTuple->SetTdStatus(ATTACH_TD_AS_HISTORY_OWNER);
+    diskTuple->SetLockerTdId(INVALID_TD_SLOT);
+    diskTuple->SetTupleSize(static_cast<uint16>(heapTuple->GetDiskTupleSize()));
+    ASSERT_NE(page.AddTuple(diskTuple, static_cast<uint16>(heapTuple->GetDiskTupleSize())), INVALID_ITEM_OFFSET_NUMBER);
+
+    SnapshotData snapshot {SnapshotType::SNAPSHOT_MVCC, COMMITSEQNO_FIRST_NORMAL, INVALID_CID};
+    CRContext crCtx {g_defaultPdbId, INVALID_CSN, nullptr, nullptr, nullptr, false, false, &snapshot,
+        txn->GetCurrentXid()};
+    CommitSeqNo firstInsertTxnCsn = INVALID_CSN;
+    auto decision = page.TryFastSkipByPageGenerationFirstInsertXid(txn, &crCtx, firstInsertTxnCsn);
+    ASSERT_EQ(decision, HeapCrFastSkipDecision::SKIP_ALL_INVISIBLE);
+
+    DstorePfreeExt(heapTuple);
+    txn->Abort();
+}
+
+TEST_F(UTHeap, UT_HCR_FASTSKIP_004_level0)
+{
+    Transaction *txn = thrd->GetActiveTransaction();
+    txn->Start();
+    txn->SetSnapshotCsn();
+
+    HeapPage page {};
+    page.Init(0, PageType::HEAP_PAGE_TYPE, INVALID_PAGE_ID);
+    page.SetDataHeaderSize(HEAP_PAGE_HEADER_SIZE);
+    page.m_header.m_lower = page.DataHeaderSize();
+    page.AllocateTdSpace();
+    page.SetHeapPageGenerationFirstInsertCsn(COMMITSEQNO_FIRST_NORMAL + 1);
+
+    SnapshotData snapshot {SnapshotType::SNAPSHOT_DIRTY, MAX_COMMITSEQNO, INVALID_CID};
+    CRContext crCtx {g_defaultPdbId, INVALID_CSN, nullptr, nullptr, nullptr, false, false, &snapshot,
+        txn->GetCurrentXid()};
+    CommitSeqNo firstInsertTxnCsn = INVALID_CSN;
+    auto decision = page.TryFastSkipByPageGenerationFirstInsertXid(txn, &crCtx, firstInsertTxnCsn);
+    ASSERT_EQ(decision, HeapCrFastSkipDecision::NOT_ELIGIBLE);
+
+    txn->Abort();
+}
+
+TEST_F(UTHeap, UT_HCR_FASTSKIP_007_level0)
+{
+    Transaction *txn = thrd->GetActiveTransaction();
+    txn->Start();
+    txn->SetSnapshotCsn();
+
+    HeapPage page {};
+    page.Init(0, PageType::INDEX_PAGE_TYPE, INVALID_PAGE_ID);
+    SnapshotData snapshot {SnapshotType::SNAPSHOT_MVCC, COMMITSEQNO_FIRST_NORMAL, INVALID_CID};
+    CRContext crCtx {g_defaultPdbId, INVALID_CSN, nullptr, nullptr, nullptr, false, false, &snapshot,
+        txn->GetCurrentXid()};
+    CommitSeqNo firstInsertTxnCsn = INVALID_CSN;
+    auto decision = page.TryFastSkipByPageGenerationFirstInsertXid(txn, &crCtx, firstInsertTxnCsn);
+    ASSERT_EQ(decision, HeapCrFastSkipDecision::NOT_ELIGIBLE);
+
+    txn->Abort();
+}
+
+TEST_F(UTHeap, UT_HCR_FASTSKIP_008_level0)
+{
+    Transaction *txn = thrd->GetActiveTransaction();
+    txn->Start();
+    txn->SetSnapshotCsn();
+
+    HeapPage page {};
+    page.Init(0, PageType::HEAP_PAGE_TYPE, INVALID_PAGE_ID);
+    page.SetDataHeaderSize(HEAP_PAGE_HEADER_SIZE);
+    page.m_header.m_lower = page.DataHeaderSize();
+    page.AllocateTdSpace();
+    page.SetHeapPageGenerationFirstInsertCsn(COMMITSEQNO_FIRST_NORMAL + 1);
+
+    bool oldValue = g_storageInstance->GetGuc()->enableHeapCrFastskipByPageCsn;
+    g_storageInstance->GetGuc()->enableHeapCrFastskipByPageCsn = false;
+    SnapshotData snapshot {SnapshotType::SNAPSHOT_MVCC, COMMITSEQNO_FIRST_NORMAL, INVALID_CID};
+    CRContext crCtx {g_defaultPdbId, INVALID_CSN, nullptr, nullptr, nullptr, false, false, &snapshot,
+        txn->GetCurrentXid()};
+    CommitSeqNo firstInsertTxnCsn = INVALID_CSN;
+    auto decision = page.TryFastSkipByPageGenerationFirstInsertXid(txn, &crCtx, firstInsertTxnCsn);
+    ASSERT_EQ(decision, HeapCrFastSkipDecision::NOT_ELIGIBLE);
+    g_storageInstance->GetGuc()->enableHeapCrFastskipByPageCsn = oldValue;
+
+    txn->Abort();
+}
+
+TEST_F(UTHeap, UT_HCR_FASTSKIP_006_level0)
+{
+    HeapPage page {};
+    page.Init(0, PageType::HEAP_PAGE_TYPE, INVALID_PAGE_ID);
+    page.SetDataHeaderSize(HEAP_PAGE_HEADER_SIZE);
+    page.m_header.m_lower = page.DataHeaderSize();
+    page.AllocateTdSpace();
+    CommitSeqNo initPageCsn = COMMITSEQNO_FIRST_NORMAL + 7;
+    page.SetHeapPageGenerationFirstInsertCsn(initPageCsn);
+    ASSERT_EQ(page.GetHeapPageGenerationFirstInsertCsn(), initPageCsn);
+
+    HeapTuple *heapTuple = m_utTableHandler->GenerateSpecificHeapTuple("generation-csn");
+    HeapDiskTuple *diskTuple = heapTuple->GetDiskTuple();
+    diskTuple->SetTdId(0);
+    diskTuple->SetTdStatus(ATTACH_TD_AS_NEW_OWNER);
+    diskTuple->SetLockerTdId(INVALID_TD_SLOT);
+    diskTuple->SetTupleSize(static_cast<uint16>(heapTuple->GetDiskTupleSize()));
+    ASSERT_NE(page.AddTuple(diskTuple, static_cast<uint16>(heapTuple->GetDiskTupleSize())), INVALID_ITEM_OFFSET_NUMBER);
+    ASSERT_EQ(page.GetHeapPageGenerationFirstInsertCsn(), initPageCsn);
+
+    DstorePfreeExt(heapTuple);
+}
+
+TEST_F(UTHeap, UT_HCR_FASTSKIP_010_level0)
+{
+    Transaction *txn = thrd->GetActiveTransaction();
+    txn->Start();
+    txn->SetSnapshotCsn();
+
+    HeapPage page {};
+    page.Init(0, PageType::HEAP_PAGE_TYPE, INVALID_PAGE_ID);
+    page.SetDataHeaderSize(HEAP_PAGE_HEADER_SIZE);
+    page.m_header.m_lower = page.DataHeaderSize();
+    page.AllocateTdSpace();
+    page.SetHeapPageGenerationFirstInsertCsn(COMMITSEQNO_FIRST_NORMAL + 1);
+
+    CommitSeqNo firstInsertTxnCsn = INVALID_CSN;
+    ASSERT_EQ(page.TryFastSkipByPageGenerationFirstInsertXid(txn, nullptr, firstInsertTxnCsn),
+              HeapCrFastSkipDecision::NOT_ELIGIBLE);
+
+    CRContext crCtxNullSnapshot {};
+    crCtxNullSnapshot.currentXid = txn->GetCurrentXid();
+    ASSERT_EQ(page.TryFastSkipByPageGenerationFirstInsertXid(txn, &crCtxNullSnapshot, firstInsertTxnCsn),
+              HeapCrFastSkipDecision::NOT_ELIGIBLE);
+
+    SnapshotData snapshot {SnapshotType::SNAPSHOT_MVCC, COMMITSEQNO_FIRST_NORMAL, INVALID_CID};
+    CRContext crCtxInvalidPageCsn {g_defaultPdbId, INVALID_CSN, nullptr, nullptr, nullptr, false, false, &snapshot,
+        txn->GetCurrentXid()};
+    page.SetHeapPageGenerationFirstInsertCsn(INVALID_CSN);
+    ASSERT_EQ(page.TryFastSkipByPageGenerationFirstInsertXid(txn, &crCtxInvalidPageCsn, firstInsertTxnCsn),
+              HeapCrFastSkipDecision::NOT_ELIGIBLE);
+
+    txn->Abort();
+}
+
+TEST_F(UTHeap, UT_HCR_FASTSKIP_011_level0)
+{
+    Transaction *txn = thrd->GetActiveTransaction();
+    txn->Start();
+    txn->SetSnapshotCsn();
+
+    HeapPage page {};
+    page.Init(0, PageType::HEAP_PAGE_TYPE, INVALID_PAGE_ID);
+    page.SetDataHeaderSize(HEAP_PAGE_HEADER_SIZE);
+    page.m_header.m_lower = page.DataHeaderSize();
+    page.AllocateTdSpace();
+    page.SetHeapPageGenerationFirstInsertCsn(COMMITSEQNO_FIRST_NORMAL + 1);
+
+    HeapTuple *heapTuple = m_utTableHandler->GenerateSpecificHeapTuple("invalid-tdid");
+    HeapDiskTuple *diskTuple = heapTuple->GetDiskTuple();
+    diskTuple->SetTdId(0);
+    diskTuple->SetTdStatus(ATTACH_TD_AS_NEW_OWNER);
+    diskTuple->SetLockerTdId(INVALID_TD_SLOT);
+    diskTuple->SetTupleSize(static_cast<uint16>(heapTuple->GetDiskTupleSize()));
+    OffsetNumber offset = page.AddTuple(diskTuple, static_cast<uint16>(heapTuple->GetDiskTupleSize()));
+    ASSERT_NE(offset, INVALID_ITEM_OFFSET_NUMBER);
+    HeapTuple tupleOnPage {};
+    page.GetTuple(&tupleOnPage, offset);
+    ASSERT_NE(tupleOnPage.GetDiskTuple(), nullptr);
+    tupleOnPage.GetDiskTuple()->SetTdId(DEFAULT_TD_COUNT + 1);
+
+    SnapshotData snapshot {SnapshotType::SNAPSHOT_MVCC, COMMITSEQNO_FIRST_NORMAL, INVALID_CID};
+    CRContext crCtx {g_defaultPdbId, INVALID_CSN, nullptr, nullptr, nullptr, false, false, &snapshot,
+        txn->GetCurrentXid()};
+    CommitSeqNo firstInsertTxnCsn = INVALID_CSN;
+    ASSERT_EQ(page.TryFastSkipByPageGenerationFirstInsertXid(txn, &crCtx, firstInsertTxnCsn),
+              HeapCrFastSkipDecision::SKIP_ALL_INVISIBLE);
+
+    DstorePfreeExt(heapTuple);
+    txn->Abort();
+}
+
+TEST_F(UTHeap, UT_HCR_FASTSKIP_012_level0)
+{
+    Transaction *txn = thrd->GetActiveTransaction();
+    txn->Start();
+    txn->SetSnapshotCsn();
+
+    HeapPage page {};
+    page.Init(0, PageType::HEAP_PAGE_TYPE, INVALID_PAGE_ID);
+    page.SetDataHeaderSize(HEAP_PAGE_HEADER_SIZE);
+    page.m_header.m_lower = page.DataHeaderSize();
+    page.AllocateTdSpace();
+    page.SetHeapPageGenerationFirstInsertCsn(COMMITSEQNO_FIRST_NORMAL + 1);
+
+    HeapTuple *heapTuple = m_utTableHandler->GenerateSpecificHeapTuple("current-xid-conflict");
+    HeapDiskTuple *diskTuple = heapTuple->GetDiskTuple();
+    diskTuple->SetTdId(0);
+    diskTuple->SetTdStatus(ATTACH_TD_AS_NEW_OWNER);
+    diskTuple->SetLockerTdId(INVALID_TD_SLOT);
+    diskTuple->SetTupleSize(static_cast<uint16>(heapTuple->GetDiskTupleSize()));
+    ASSERT_NE(page.AddTuple(diskTuple, static_cast<uint16>(heapTuple->GetDiskTupleSize())), INVALID_ITEM_OFFSET_NUMBER);
+    Xid conflictXid(1, 1);
+    page.GetTd(0)->SetXid(conflictXid);
+
+    SnapshotData snapshot {SnapshotType::SNAPSHOT_MVCC, COMMITSEQNO_FIRST_NORMAL, INVALID_CID};
+    CRContext crCtx {g_defaultPdbId, INVALID_CSN, nullptr, nullptr, nullptr, false, false, &snapshot,
+        conflictXid};
+    CommitSeqNo firstInsertTxnCsn = INVALID_CSN;
+    ASSERT_EQ(page.TryFastSkipByPageGenerationFirstInsertXid(txn, &crCtx, firstInsertTxnCsn),
+              HeapCrFastSkipDecision::NOT_ELIGIBLE);
+
+    DstorePfreeExt(heapTuple);
+    txn->Abort();
+}
+
+TEST_F(UTHeap, UT_HCR_FASTSKIP_013_level0)
+{
+    Transaction *txn = thrd->GetActiveTransaction();
+    txn->Start();
+    txn->SetSnapshotCsn();
+
+    HeapPage page {};
+    page.Init(0, PageType::HEAP_PAGE_TYPE, INVALID_PAGE_ID);
+    page.SetDataHeaderSize(HEAP_PAGE_HEADER_SIZE);
+    page.m_header.m_lower = page.DataHeaderSize();
+    page.AllocateTdSpace();
+    CommitSeqNo initPageCsn = COMMITSEQNO_FIRST_NORMAL + 11;
+    page.SetHeapPageGenerationFirstInsertCsn(initPageCsn);
+
+    SnapshotData snapshot {SnapshotType::SNAPSHOT_MVCC, COMMITSEQNO_FIRST_NORMAL, INVALID_CID};
+    CRContext crCtx {g_defaultPdbId, INVALID_CSN, nullptr, nullptr, nullptr, false, false, &snapshot, INVALID_XID};
+    ASSERT_EQ(page.ConstructCR(txn, &crCtx, nullptr), DSTORE_SUCC);
+    ASSERT_TRUE(crCtx.useLocalCr);
+    ASSERT_EQ(crCtx.pageMaxCsn, initPageCsn);
+
+    txn->Abort();
+}

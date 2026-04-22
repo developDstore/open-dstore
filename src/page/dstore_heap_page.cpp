@@ -33,6 +33,7 @@
 #include "transaction/dstore_transaction_mgr.h"
 #include "transaction/dstore_transaction.h"
 #include "heap/dstore_heap_undo_struct.h"
+#include "framework/dstore_thread.h"
 
 namespace DSTORE {
 
@@ -53,6 +54,23 @@ void HeapPage::InitHeapPage(BufferDesc *bufDesc, const PageId &selfPageId, const
     heapPage->AllocateTdSpace();
 
     heapPage->SetFsmIndex(fsmIndex);
+    CommitSeqNo initPageCsn = INVALID_CSN;
+    bool useGlobalCsnFallback = true;
+    if (thrd != nullptr) {
+        CommitSeqNo localCsn = thrd->GetLocalCsn();
+        if (localCsn != INVALID_CSN && localCsn != MAX_COMMITSEQNO) {
+            initPageCsn = localCsn;
+            useGlobalCsnFallback = false;
+        }
+    }
+    if (useGlobalCsnFallback && g_storageInstance != nullptr && g_storageInstance->GetCsnMgr() != nullptr) {
+        CommitSeqNo globalCsn = INVALID_CSN;
+        if (!STORAGE_FUNC_FAIL(g_storageInstance->GetCsnMgr()->GetNextCsn(globalCsn, false)) &&
+            globalCsn != INVALID_CSN && globalCsn != MAX_COMMITSEQNO) {
+            initPageCsn = globalCsn;
+        }
+    }
+    heapPage->SetHeapPageGenerationFirstInsertCsn(initPageCsn);
     heapPage->SetIsNewPage(true);
 }
 
