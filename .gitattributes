@@ -1,0 +1,30 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Shell scripts must always use LF line endings
+*.sh text eol=lf
+buildenv text eol=lf
+buildenv.* text eol=lf
+
+# CMake files should use LF
+*.cmake text eol=lf
+CMakeLists.txt text eol=lf
+
+# Config files
+*.conf text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Python files
+*.py text eol=lf
+
+# Binary files (don't touch)
+*.so binary
+*.a binary
+*.o binary
+*.tar.gz binary
+*.gz binary
+*.png binary
+*.jpg binary
+*.ico binary
