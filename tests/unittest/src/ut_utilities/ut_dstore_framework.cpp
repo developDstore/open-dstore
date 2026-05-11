@@ -226,6 +226,7 @@ void DSTORETEST::SetUpTestCase()
     m_guc.gclockOverlapWaitTimeOptimization = true;
     m_guc.enableQuickStartUp = false;
     m_guc.tenantConfig = &m_tenantConfig;
+    m_guc.enableHeapCrFastskipByPageCsn = true;
     m_guc.bgMemWriterSlaveNum = 1;
     m_guc.rnSleepTimeoutSeconds = 1;
     m_guc.enableRemoteCrConstruction = false;
@@ -491,6 +492,7 @@ void DSTOREParamTest<T>::SetUpTestCase()
     m_guc.enableRemoteCrConstruction = false;
     m_guc.walKeepTimeAfterRecovery = 0;
     m_guc.enableStmtTrack = false;
+    m_guc.enableHeapCrFastskipByPageCsn = true;
 
     char m_tenantConfigFilePath[MAXPGPATH];
     /* Get tenant config file. */

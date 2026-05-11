@@ -570,6 +570,86 @@ TEST_F(TableSpaceWalTest, AddFsmSlotWithLeafFsmPageTest_level0)
     CheckWalsForOnePage(plsn, 2, walType0, true);
 }
 
+TEST_F(TableSpaceWalTest, InitOneHeapDataPageRedoResetPageGenerationCsn_level0)
+{
+    HeapNormalSegment *segment = (HeapNormalSegment *)SegmentTest::UTAllocSegment(
+        g_defaultPdbId, m_testTbs->GetTablespaceId(), m_testBufMgr, SegmentType::HEAP_SEGMENT_TYPE);
+    ASSERT_TRUE(SegmentIsValid(segment));
+
+    PageId pageId = segment->GetNewPage();
+    ASSERT_NE(pageId, INVALID_PAGE_ID);
+
+    BufferDesc *bufDesc = m_testBufMgr->Read(g_defaultPdbId, pageId, LW_EXCLUSIVE);
+    ASSERT_NE(bufDesc, INVALID_BUFFER_DESC);
+    auto *heapPage = static_cast<HeapPage *>(bufDesc->GetPage());
+    FsmIndex fsmIndex = heapPage->GetFsmIndex();
+
+    heapPage->SetHeapPageGenerationFirstInsertCsn(COMMITSEQNO_FIRST_NORMAL + 9);
+    ASSERT_NE(heapPage->GetHeapPageGenerationFirstInsertCsn(), INVALID_CSN);
+
+    WalRecordTbsInitOneDataPage walRecord {};
+    WalRecordLsnInfo preLsnInfo = {heapPage->GetWalId(), heapPage->GetPlsn(), heapPage->GetGlsn()};
+    walRecord.SetData(pageId, PageType::HEAP_PAGE_TYPE, fsmIndex, preLsnInfo, 0);
+    walRecord.Redo(bufDesc);
+
+    CommitSeqNo firstInsertCsn = heapPage->GetHeapPageGenerationFirstInsertCsn();
+    m_testBufMgr->UnlockAndRelease(bufDesc);
+    ASSERT_EQ(firstInsertCsn, INVALID_CSN);
+}
+
+TEST_F(TableSpaceWalTest, InitMultiHeapDataPagesRedoResetPageGenerationCsn_level0)
+{
+    HeapNormalSegment *segment = (HeapNormalSegment *)SegmentTest::UTAllocSegment(
+        g_defaultPdbId, m_testTbs->GetTablespaceId(), m_testBufMgr, SegmentType::HEAP_SEGMENT_TYPE);
+    ASSERT_TRUE(SegmentIsValid(segment));
+
+    PageId pageId = segment->GetNewPage();
+    ASSERT_NE(pageId, INVALID_PAGE_ID);
+
+    BufferDesc *bufDesc = m_testBufMgr->Read(g_defaultPdbId, pageId, LW_EXCLUSIVE);
+    ASSERT_NE(bufDesc, INVALID_BUFFER_DESC);
+    auto *heapPage = static_cast<HeapPage *>(bufDesc->GetPage());
+    FsmIndex fsmIndex = heapPage->GetFsmIndex();
+
+    heapPage->SetHeapPageGenerationFirstInsertCsn(COMMITSEQNO_FIRST_NORMAL + 17);
+    WalRecordLsnInfo pageLsnInfo = {heapPage->GetWalId(), heapPage->GetPlsn(), heapPage->GetGlsn()};
+
+    struct alignas(WalRecordTbsInitDataPages) WalRecordBuffer {
+        char data[sizeof(WalRecordTbsInitDataPages) + sizeof(WalRecordLsnInfo)];
+    };
+    WalRecordBuffer walRecordBuffer {};
+    auto *walRecord = reinterpret_cast<WalRecordTbsInitDataPages *>(walRecordBuffer.data);
+    WalRecordLsnInfo preWalPointerInput[1] = {pageLsnInfo};
+    walRecord->SetHeader(WAL_TBS_INIT_MULTIPLE_DATA_PAGES, sizeof(walRecordBuffer.data), 0);
+    walRecord->SetData(PageType::HEAP_PAGE_TYPE, pageId, fsmIndex, 1, preWalPointerInput);
+
+    WalRecordRedoContext redoCtx = {INVALID_XID, pageLsnInfo.walId, g_defaultPdbId, pageLsnInfo.endPlsn + 1};
+    uint64 recordGlsn = walRecord->preWalPointer[0].walId != redoCtx.walId ? walRecord->preWalPointer[0].glsn + 1 :
+                        walRecord->preWalPointer[0].glsn;
+    WalRecordLsnInfo recordLsnInfo = {redoCtx.walId, redoCtx.recordEndPlsn, recordGlsn};
+    WalId pageWalId = heapPage->GetWalId();
+    uint64 pagePlsn = heapPage->GetPlsn();
+    uint64 pageGlsn = heapPage->GetGlsn();
+    auto replayType = WalRecovery::GetWalRecordReplayType(bufDesc->GetBufferTag(), heapPage, walRecord->preWalPointer[0],
+                                                          recordLsnInfo);
+    m_testBufMgr->UnlockAndRelease(bufDesc);
+    if (replayType != WalRecordReplayType::REPLAYABLE) {
+        ADD_FAILURE() << "Replay check failed. page=(" << pageWalId << "," << pagePlsn << "," << pageGlsn
+                      << "), pre=(" << walRecord->preWalPointer[0].walId << "," << walRecord->preWalPointer[0].endPlsn
+                      << "," << walRecord->preWalPointer[0].glsn << "), record=(" << recordLsnInfo.walId << ","
+                      << recordLsnInfo.endPlsn << "," << recordLsnInfo.glsn << ")";
+    }
+    ASSERT_EQ(replayType, WalRecordReplayType::REPLAYABLE);
+    walRecord->Redo(&redoCtx);
+
+    bufDesc = m_testBufMgr->Read(g_defaultPdbId, pageId, LW_SHARED);
+    ASSERT_NE(bufDesc, INVALID_BUFFER_DESC);
+    heapPage = static_cast<HeapPage *>(bufDesc->GetPage());
+    CommitSeqNo firstInsertCsn = heapPage->GetHeapPageGenerationFirstInsertCsn();
+    m_testBufMgr->UnlockAndRelease(bufDesc);
+    ASSERT_EQ(firstInsertCsn, INVALID_CSN);
+}
+
 TEST_F(TableSpaceWalTest, ExtendFileTest_level0)
 {
     CopyDataFile();

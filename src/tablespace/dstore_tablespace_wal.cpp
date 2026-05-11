@@ -1101,6 +1101,11 @@ void WalRecordTbsInitOneDataPage::Redo(BufferDesc *bufDesc) const
     /* Init data page with fsm index */
     if (dataPageType == PageType::HEAP_PAGE_TYPE) {
         HeapPage::InitHeapPage(bufDesc, m_pageId, curFsmIndex);
+        /*
+         * Recovery-only behavior: for pages initialized via WAL redo, do not anchor
+         * fast-skip gate with a runtime-local init csn.
+         */
+        static_cast<HeapPage *>(bufDesc->GetPage())->SetHeapPageGenerationFirstInsertCsn(INVALID_CSN);
     } else {
         BtrPage::InitBtrPage(bufDesc, m_pageId, curFsmIndex);
     }
@@ -1166,6 +1171,11 @@ void WalRecordTbsInitDataPages::Redo(WalRecordRedoContext *redoCtx) const
         FsmIndex curFsmIndex = {fsmPageId, curSlotId};
         if (dataPageType == PageType::HEAP_PAGE_TYPE) {
             HeapPage::InitHeapPage(bufDesc, curDataPageId, curFsmIndex);
+            /*
+             * Recovery-only behavior: for pages initialized via WAL redo, do not anchor
+             * fast-skip gate with a runtime-local init csn.
+             */
+            static_cast<HeapPage *>(bufDesc->GetPage())->SetHeapPageGenerationFirstInsertCsn(INVALID_CSN);
         } else {
             BtrPage::InitBtrPage(bufDesc, curDataPageId, curFsmIndex);
         }

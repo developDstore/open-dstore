@@ -46,6 +46,11 @@ using TdId = uint8_t;
 
 struct CRContext;
 class UndoMgr;
+enum class HeapCrFastSkipDecision {
+    NOT_ELIGIBLE = 0,
+    SKIP_ALL_INVISIBLE,
+    CONTINUE_NORMAL
+};
 /* ----------------
  *      support macros
  * ----------------
@@ -124,7 +129,10 @@ struct PACKED DataPageHeader {
     uint8 tdCount;
     uint32 versionNum;
     uint16 headerOffset;
-    Xid segmentCreateXid;
+    union PACKED SegmentCreateMeta {
+        Xid segmentCreateXid;
+        CommitSeqNo heapPageGenerationFirstInsertCsn;
+    } segmentCreateMeta;
     uint8 reserved[RESERVED_DATA_PAGE_HEADER_SIZE];
 };
 
@@ -306,12 +314,34 @@ struct DataPage : public Page {
 
     inline void SetSegmentCreateXid(Xid xid)
     {
-        dataHeader.segmentCreateXid = xid;
+        dataHeader.segmentCreateMeta.segmentCreateXid = xid;
     }
 
     inline Xid GetSegmentCreateXid() const
     {
-        return dataHeader.segmentCreateXid;
+        return dataHeader.segmentCreateMeta.segmentCreateXid;
+    }
+
+    /*
+     * Heap-only semantic: reuse segmentCreateXid storage as page-generation init CSN anchor.
+     * Historical naming keeps "FirstInsert" for compatibility with existing call sites.
+     * Index pages must continue to use Get/SetSegmentCreateXid for create-xid semantics.
+     */
+    inline void SetHeapPageGenerationFirstInsertCsn(CommitSeqNo firstInsertCsn)
+    {
+        StorageAssert(GetType() == PageType::HEAP_PAGE_TYPE);
+        dataHeader.segmentCreateMeta.heapPageGenerationFirstInsertCsn = firstInsertCsn;
+    }
+
+    inline CommitSeqNo GetHeapPageGenerationFirstInsertCsn() const
+    {
+        StorageAssert(GetType() == PageType::HEAP_PAGE_TYPE);
+        return dataHeader.segmentCreateMeta.heapPageGenerationFirstInsertCsn;
+    }
+
+    inline bool IsHeapPageGenerationFirstInsertCsnValid() const
+    {
+        return GetType() == PageType::HEAP_PAGE_TYPE && GetHeapPageGenerationFirstInsertCsn() != INVALID_CSN;
     }
 
     inline void SetTuplePrunable(bool prunable)
@@ -406,6 +436,10 @@ struct DataPage : public Page {
     * to the snapshot.
     */
     RetStatus ConstructCR(Transaction *transaction, CRContext *crCtx, BtreeUndoContext *btrUndoContext = nullptr);
+    HeapCrFastSkipDecision TryFastSkipByPageGenerationFirstInsertXid(
+        Transaction *transaction, CRContext *crCtx, CommitSeqNo &pageInitCsn);
+    bool IsHeapFastSkipEligibleByPageState(CRContext *crCtx) const;
+    void BuildEmptyVisibleHeapCrPage();
 
     void DumpDataPageHeader(StringInfo str);
 #ifdef DSTORE_USE_ASSERT_CHECKING
